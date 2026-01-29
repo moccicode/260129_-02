@@ -1,0 +1,7 @@
+{
+  "name": "260129_#02",
+  "description": "Automatically generates interactive educational and engaging content based on article URLs with multi-stage processing for speed and reliability.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
