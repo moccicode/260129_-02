@@ -18,9 +18,9 @@ const App: React.FC = () => {
     setConfig(userConfig);
 
     try {
-      // Simulate/Perform content extraction or use pasted text
-      const articleText = userConfig.pastedText || "기사 본문을 가져올 수 없습니다. 내용을 직접 붙여넣어 주세요.";
-      const articleTitle = userConfig.url.split('/').pop() || "제목 없는 기사";
+      // 본문이 없으면 URL이라도 사용하여 검색 기반 생성 시도
+      const articleText = userConfig.pastedText || `이 기사의 내용을 분석해줘. 기사 링크: ${userConfig.url}`;
+      const articleTitle = userConfig.url.split('/').filter(Boolean).pop()?.split('?')[0] || "분석 대상 기사";
 
       const data = await geminiService.fetchFastPass(
         articleTitle,
@@ -29,11 +29,15 @@ const App: React.FC = () => {
         userConfig.tone
       );
 
+      if (!data || !data.core_summary) {
+        throw new Error("기사 분석 결과를 생성하지 못했습니다. 본문 내용을 직접 붙여넣어 보세요.");
+      }
+
       setFastData(data);
       setView('RESULT');
     } catch (err: any) {
-      setError("빠른 생성을 생성하는 중 오류가 발생했습니다. (기사 본문 부족 또는 API 오류)");
-      console.error(err);
+      console.error("API Error Detailed:", err);
+      setError(err.message || "콘텐츠 생성 중 예상치 못한 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
     } finally {
       setIsLoading(false);
     }
@@ -43,6 +47,7 @@ const App: React.FC = () => {
     setView('INPUT');
     setFastData(null);
     setConfig(null);
+    setError(null);
   };
 
   return (
