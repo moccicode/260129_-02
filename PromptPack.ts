@@ -55,5 +55,12 @@ export const PROMPTS = {
     이 기사를 상징하는 시각적 이미지를 생성하기 위한 구체적인 영어 프롬프트를 작성하여 JSON으로 반환하세요.
     { "image_prompt": string }
     기사 내용: ${text}
+  `,
+  QA_ANSWER: (articleText: string, question: string) => `
+    다음 기사 내용을 바탕으로 사용자의 질문에 답변하세요. 
+    질문: ${question}
+    기사 내용: ${articleText}
+
+    답변은 친절하고 명확하게 한국어로 작성해 주세요. 만약 기사 내용에 없는 정보라면 "기사 내용만으로는 답변드리기 어렵습니다"라고 말하고 아는 범위 내에서 조심스럽게 설명해 주세요.
   `
 };

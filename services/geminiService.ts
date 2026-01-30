@@ -35,6 +35,15 @@ export const geminiService = {
     return JSON.parse(response.text || "{}");
   },
 
+  async askQuestion(articleText: string, question: string) {
+    const ai = new GoogleGenAI({ apiKey: API_KEY });
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: PROMPTS.QA_ANSWER(articleText, question),
+    });
+    return response.text;
+  },
+
   async generateSectionImage(prompt: string) {
     const ai = new GoogleGenAI({ apiKey: API_KEY });
     const response = await ai.models.generateContent({

@@ -8,8 +8,9 @@ export const APP_SPEC = {
     { id: "game", title: "미니 게임", strategy: "ondemand" },
     { id: "fact_vs_inference", title: "사실 vs 추론", strategy: "ondemand" },
     { id: "deep_report", title: "심층 분석", strategy: "ondemand" },
-    { id: "media", title: "멀티미디어", strategy: "ondemand" },
-    { id: "rolling_paper", title: "참여 및 마무리", strategy: "local" }
+    { id: "qa", title: "심층 Q&A", strategy: "ondemand" },
+    { id: "media", title: "AI 이미지 & 유튜브 영상", strategy: "ondemand" },
+    { id: "rolling_paper", title: "기사 리뷰 노트", strategy: "local" }
   ],
   modes: ["CLICK", "SCROLL"],
   error_handling: {

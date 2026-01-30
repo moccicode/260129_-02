@@ -7,6 +7,7 @@ import SectionLoader from './SectionLoader';
 import QuizComponent from './QuizComponent';
 import GameComponent from './GameComponent';
 import RollingPaper from './RollingPaper';
+import QAComponent from './QAComponent';
 
 interface ResultViewProps {
   config: AppConfig;
@@ -45,7 +46,6 @@ const ResultView: React.FC<ResultViewProps> = ({ config, fastData, onReset }) =>
     window.speechSynthesis.cancel();
     const utter = new SpeechSynthesisUtterance(text);
     
-    // 자연스러운 목소리 톤과 속도 조정
     utter.lang = 'ko-KR';
     utter.rate = 1.0; 
     utter.pitch = 1.05; 
@@ -71,11 +71,16 @@ const ResultView: React.FC<ResultViewProps> = ({ config, fastData, onReset }) =>
       case 'summary':
         return (
           <div className="space-y-8">
-            <div className="p-6 bg-blue-50 border border-blue-100 rounded-2xl shadow-inner">
+            <div className="p-6 bg-blue-50 border border-blue-100 rounded-2xl shadow-inner relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-2 opacity-10">
+                <svg className="w-20 h-20" fill="currentColor" viewBox="0 0 24 24"><path d="M14.017 21L14.017 18C14.017 16.8954 13.1216 16 12.017 16H9.01703V14H12.017C14.2262 14 16.017 12.2091 16.017 10V7C16.017 5.89543 15.1216 5 14.017 5H5.01703C3.91246 5 3.01703 5.89543 3.01703 7V17C3.01703 19.2091 4.80789 21 7.01703 21H14.017Z"/></svg>
+              </div>
               <h3 className="text-xl font-black text-blue-900 mb-3 flex items-center gap-2">
                 <span className="text-2xl">🔖</span> 한 줄 요약
               </h3>
-              <p className="text-xl text-blue-800 font-bold leading-relaxed italic">"{fastData.core_summary.one_liner}"</p>
+              <p className="text-xl text-blue-800 font-bold leading-relaxed italic">
+                <span className="bg-yellow-200/60 px-1 rounded">"{fastData.core_summary.one_liner}"</span>
+              </p>
             </div>
 
             <div className="p-6 bg-white border border-gray-100 rounded-2xl shadow-sm relative group">
@@ -112,9 +117,11 @@ const ResultView: React.FC<ResultViewProps> = ({ config, fastData, onReset }) =>
               <h3 className="font-bold text-xl text-[#0F172A] border-l-4 border-blue-500 pl-3">핵심 포인트</h3>
               <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {fastData.core_summary.bullets.map((b, i) => (
-                  <li key={i} className="flex gap-3 items-center p-4 bg-gray-50 rounded-xl border border-gray-100">
+                  <li key={i} className="flex gap-3 items-center p-4 bg-gray-50 rounded-xl border border-gray-100 group hover:bg-blue-50 transition-colors">
                     <span className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold shadow-sm">{i+1}</span>
-                    <span className="text-[#334155] font-semibold">{b}</span>
+                    <span className="text-[#334155] font-semibold">
+                      <span className="group-hover:bg-blue-100/50 transition-colors px-1 rounded">{b}</span>
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -129,6 +136,8 @@ const ResultView: React.FC<ResultViewProps> = ({ config, fastData, onReset }) =>
         );
       case 'quiz':
         return data?.quizzes ? <QuizComponent quizzes={data.quizzes} /> : <SectionLoader isLoading={isLoading} onLoad={() => loadSectionData(id)} />;
+      case 'qa':
+        return <QAComponent articleText={config.pastedText || fastData.core_summary.detailed_summary} />;
       case 'game':
         return data?.games ? <GameComponent game={data.games} /> : <SectionLoader isLoading={isLoading} onLoad={() => loadSectionData(id)} />;
       case 'fact_vs_inference':
@@ -140,7 +149,9 @@ const ResultView: React.FC<ResultViewProps> = ({ config, fastData, onReset }) =>
                 <div className="space-y-4">
                   {data.facts_vs_inference.facts.map((f, i) => (
                     <div key={i} className="text-sm bg-white p-3 rounded-lg shadow-sm border border-emerald-50">
-                      <p className="font-bold text-emerald-900 mb-2">{f.claim}</p>
+                      <p className="font-bold text-emerald-900 mb-2">
+                        <span className="bg-emerald-100 px-1 rounded">{f.claim}</span>
+                      </p>
                       <p className="text-emerald-700 italic border-l-3 border-emerald-200 pl-3 text-xs leading-relaxed">"{f.source_quote}"</p>
                     </div>
                   ))}
@@ -151,7 +162,9 @@ const ResultView: React.FC<ResultViewProps> = ({ config, fastData, onReset }) =>
                 <div className="space-y-4">
                   {data.facts_vs_inference.inferences.map((inf, i) => (
                     <div key={i} className="text-sm bg-white p-3 rounded-lg shadow-sm border border-amber-50">
-                      <p className="font-bold text-amber-900 mb-1">{inf.claim}</p>
+                      <p className="font-bold text-amber-900 mb-1">
+                        <span className="bg-amber-100 px-1 rounded">{inf.claim}</span>
+                      </p>
                       <p className="text-amber-700 leading-relaxed mb-2">{inf.reasoning}</p>
                       <div className="flex justify-end">
                         <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tighter ${inf.confidence === 'high' ? 'bg-green-100 text-green-700' : inf.confidence === 'mid' ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700'}`}>
@@ -189,31 +202,34 @@ const ResultView: React.FC<ResultViewProps> = ({ config, fastData, onReset }) =>
               </div>
             </div>
 
-            <div className="p-6 bg-slate-50 rounded-2xl">
+            <div className="p-6 bg-slate-50 rounded-2xl relative overflow-hidden group">
+              <div className="absolute top-0 left-0 w-1 h-full bg-blue-400 opacity-0 group-hover:opacity-100 transition-opacity"></div>
               <h4 className="font-black text-xl text-[#0F172A] mb-4">{reportLang === 'ko' ? '왜 중요한가?' : 'Why It Matters?'}</h4>
-              <p className="text-lg leading-relaxed">{content.why_it_matters}</p>
+              <p className="text-lg leading-relaxed">
+                <span className="group-hover:bg-blue-100/30 transition-colors px-1 rounded">{content.why_it_matters}</span>
+              </p>
             </div>
             <div className="grid md:grid-cols-2 gap-8">
               <div className="space-y-4">
                 <h4 className="font-black text-lg text-[#0F172A] flex items-center gap-2">🌐 {reportLang === 'ko' ? '맥락 (Context)' : 'Context'}</h4>
-                <p className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm leading-relaxed">{content.context}</p>
+                <p className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm leading-relaxed border-t-4 border-t-blue-400">{content.context}</p>
               </div>
               <div className="space-y-4">
                 <h4 className="font-black text-lg text-[#0F172A] flex items-center gap-2">🎯 {reportLang === 'ko' ? '예상 영향' : 'Expected Impact'}</h4>
-                <p className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm leading-relaxed">{content.impact}</p>
+                <p className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm leading-relaxed border-t-4 border-t-emerald-400">{content.impact}</p>
               </div>
             </div>
             <div className="grid md:grid-cols-2 gap-8">
               <div>
                 <h4 className="font-black text-lg text-[#0F172A] mb-3">👥 {reportLang === 'ko' ? '주요 이해관계자' : 'Key Stakeholders'}</h4>
                 <div className="flex flex-wrap gap-2">
-                  {content.stakeholders.map((s, i) => <span key={i} className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg font-bold text-sm"># {s}</span>)}
+                  {content.stakeholders.map((s, i) => <span key={i} className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg font-bold text-sm border border-blue-100 shadow-sm hover:scale-105 transition-transform"># {s}</span>)}
                 </div>
               </div>
               <div>
                 <h4 className="font-black text-lg text-[#0F172A] mb-3">❓ {reportLang === 'ko' ? '더 던져볼 질문들' : 'Open Questions'}</h4>
                 <ul className="space-y-2">
-                  {content.open_questions.map((q, i) => <li key={i} className="text-sm flex gap-2"><span className="text-blue-500 font-bold">Q.</span> {q}</li>)}
+                  {content.open_questions.map((q, i) => <li key={i} className="text-sm flex gap-2"><span className="text-blue-500 font-bold">Q.</span> <span className="hover:bg-blue-50 transition-colors px-1 rounded">{q}</span></li>)}
                 </ul>
               </div>
             </div>
@@ -284,6 +300,48 @@ const ResultView: React.FC<ResultViewProps> = ({ config, fastData, onReset }) =>
     }
   };
 
+  const Sidebar = () => (
+    <aside className="w-full lg:w-72 lg:fixed lg:top-20 lg:bottom-0 lg:left-0 lg:border-r border-gray-100 bg-white/50 backdrop-blur-md z-40 lg:overflow-y-auto no-scrollbar">
+      <div className="p-6 space-y-2">
+        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 px-2">Content Navigation</p>
+        {APP_SPEC.sections.map(sec => {
+          const isActive = activeSection === sec.id;
+          return (
+            <button
+              key={sec.id}
+              onClick={() => {
+                setActiveSection(sec.id);
+                if (config.mode === 'SCROLL') {
+                   document.getElementById(sec.id)?.scrollIntoView({ behavior: 'smooth' });
+                }
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-black transition-all group ${
+                isActive 
+                  ? 'bg-blue-600 text-white shadow-xl shadow-blue-100 scale-[1.02]' 
+                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+              }`}
+            >
+              <span className={`w-2 h-2 rounded-full transition-all ${isActive ? 'bg-white scale-125' : 'bg-gray-200 group-hover:bg-blue-400'}`}></span>
+              {sec.title}
+              {isActive && (
+                <svg className="ml-auto w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7"></path>
+                </svg>
+              )}
+            </button>
+          );
+        })}
+      </div>
+      <div className="mt-10 p-6 pt-0 opacity-50">
+        <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+           <p className="text-[10px] font-black text-gray-400 mb-1">Target Audience</p>
+           <p className="text-xs font-bold text-gray-700">{config.ageBand}대 독자</p>
+        </div>
+      </div>
+    </aside>
+  );
+
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
       {/* Header */}
@@ -292,58 +350,88 @@ const ResultView: React.FC<ResultViewProps> = ({ config, fastData, onReset }) =>
           <button onClick={onReset} className="p-2 hover:bg-gray-100 rounded-full transition-colors active:scale-90">
             <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
           </button>
-          <div>
+          <div className="hidden sm:block">
             <h2 className="text-lg font-black text-[#0F172A] line-clamp-1">{fastData.article.title}</h2>
-            <p className="text-xs text-[#64748B] font-bold">{fastData.category} | {config.ageBand}대 타겟</p>
+            <p className="text-xs text-[#64748B] font-bold">{fastData.category} | {APP_SPEC.name}</p>
           </div>
         </div>
-        <a href={config.url} target="_blank" rel="noopener noreferrer" className="px-5 py-2.5 bg-[#111827] text-white text-sm font-black rounded-xl hover:bg-black hover:scale-105 active:scale-95 transition-all shadow-md">
-          기사 원문 보기
-        </a>
+        <div className="flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full">
+             <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+             <span className="text-[10px] font-black text-gray-500 uppercase">{config.mode} MODE</span>
+          </div>
+          <a href={config.url} target="_blank" rel="noopener noreferrer" className="px-5 py-2.5 bg-[#111827] text-white text-sm font-black rounded-xl hover:bg-black hover:scale-105 active:scale-95 transition-all shadow-md">
+            기사 원문 보기
+          </a>
+        </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-6 py-10">
-        {config.mode === 'CLICK' ? (
-          <div className="space-y-10">
-            {/* Step Navigation */}
-            <div className="flex overflow-x-auto gap-3 pb-6 no-scrollbar snap-x">
-              {APP_SPEC.sections.map(sec => (
-                <button
-                  key={sec.id}
-                  onClick={() => setActiveSection(sec.id)}
-                  className={`snap-center flex-shrink-0 px-6 py-3 rounded-2xl text-sm font-black transition-all border-2 ${activeSection === sec.id ? 'bg-[#111827] text-white border-[#111827] shadow-lg scale-105' : 'bg-white text-gray-500 border-gray-100 hover:border-gray-300'}`}
+      <div className="lg:pl-72 flex flex-col min-h-[calc(100vh-80px)]">
+        <Sidebar />
+
+        <main className="flex-1 w-full max-w-4xl mx-auto px-6 py-10">
+          {config.mode === 'CLICK' ? (
+            <div className="animate-fadeIn">
+              <section className="glass-card rounded-[2.5rem] p-10 shadow-2xl border-white relative overflow-hidden transition-all duration-500">
+                <div className="absolute top-0 left-0 w-2 h-full bg-blue-600"></div>
+                <div className="flex items-center justify-between mb-10 border-b-2 border-gray-50 pb-6">
+                  <h3 className="text-3xl font-black text-[#0F172A]">
+                    {APP_SPEC.sections.find(s => s.id === activeSection)?.title}
+                  </h3>
+                  <div className="flex flex-col items-end">
+                    <span className="text-xs uppercase tracking-widest text-gray-300 font-black">Interactive Section</span>
+                    <span className="text-[10px] font-bold text-blue-500">Step {APP_SPEC.sections.findIndex(s => s.id === activeSection) + 1} of {APP_SPEC.sections.length}</span>
+                  </div>
+                </div>
+                <div className="animate-slideUp">
+                  {renderSection(activeSection)}
+                </div>
+              </section>
+              
+              <div className="mt-10 flex justify-between items-center px-4">
+                <button 
+                  onClick={() => {
+                    const idx = APP_SPEC.sections.findIndex(s => s.id === activeSection);
+                    if (idx > 0) setActiveSection(APP_SPEC.sections[idx-1].id);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  disabled={activeSection === APP_SPEC.sections[0].id}
+                  className="px-6 py-3 rounded-2xl bg-white border border-gray-200 text-gray-600 font-black hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95"
                 >
-                  {sec.title}
+                  이전 단계
                 </button>
+                <button 
+                  onClick={() => {
+                    const idx = APP_SPEC.sections.findIndex(s => s.id === activeSection);
+                    if (idx < APP_SPEC.sections.length - 1) setActiveSection(APP_SPEC.sections[idx+1].id);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  disabled={activeSection === APP_SPEC.sections[APP_SPEC.sections.length-1].id}
+                  className="px-6 py-3 rounded-2xl bg-blue-600 text-white font-black hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all active:scale-95"
+                >
+                  다음 단계
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-16 pb-20">
+              {APP_SPEC.sections.map(sec => (
+                <section key={sec.id} id={sec.id} className="glass-card rounded-[2.5rem] p-10 shadow-2xl border-white relative overflow-hidden group hover:shadow-blue-100 transition-all duration-500">
+                   <div className="absolute top-0 left-0 w-2 h-0 group-hover:h-full bg-blue-600 transition-all duration-500"></div>
+                   <h3 className="text-3xl font-black text-[#0F172A] mb-10 border-b-2 border-gray-50 pb-6">{sec.title}</h3>
+                   <div className="animate-fadeIn">
+                     {renderSection(sec.id)}
+                   </div>
+                </section>
               ))}
             </div>
-
-            {/* Active Content */}
-            <section className="glass-card rounded-[2.5rem] p-10 shadow-2xl border-white relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-2 h-full bg-blue-600"></div>
-              <h3 className="text-3xl font-black text-[#0F172A] mb-10 border-b-2 border-gray-50 pb-6 flex items-center justify-between">
-                {APP_SPEC.sections.find(s => s.id === activeSection)?.title}
-                <span className="text-xs uppercase tracking-widest text-gray-300">INTERACTIVE SECTION</span>
-              </h3>
-              <div className="animate-fadeIn">
-                {renderSection(activeSection)}
-              </div>
-            </section>
-          </div>
-        ) : (
-          <div className="space-y-16 pb-20">
-            {APP_SPEC.sections.map(sec => (
-              <section key={sec.id} id={sec.id} className="glass-card rounded-[2.5rem] p-10 shadow-2xl border-white relative overflow-hidden group hover:shadow-blue-100 transition-all duration-500">
-                 <div className="absolute top-0 left-0 w-2 h-0 group-hover:h-full bg-blue-600 transition-all duration-500"></div>
-                 <h3 className="text-3xl font-black text-[#0F172A] mb-10 border-b-2 border-gray-50 pb-6">{sec.title}</h3>
-                 <div className="animate-fadeIn">
-                   {renderSection(sec.id)}
-                 </div>
-              </section>
-            ))}
-          </div>
-        )}
-      </main>
+          )}
+        </main>
+        
+        <footer className="mt-auto py-10 px-6 border-t border-gray-100 text-center">
+           <p className="text-xs font-bold text-gray-400">© 2025 {APP_SPEC.name}. Powered by Gemini AI Engine.</p>
+        </footer>
+      </div>
     </div>
   );
 };
